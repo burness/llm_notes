@@ -4,5 +4,6 @@
 
 1. 复现transformer模块。
 
+    `python training.py`
 
-
+    ![](./images/attention_log.png)
