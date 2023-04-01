@@ -1,5 +1,6 @@
 import os
 from ast import literal_eval
+
 class CfgNode:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
@@ -19,7 +20,7 @@ class CfgNode:
         return "".join(parts)
     
     def to_dict(self):
-        return {k: v.to_dict() if istance(v, CfgNode) else v for k, v in self.__dict__.items()}
+        return {k: v.to_dict() if isinstance(v, CfgNode) else v for k, v in self.__dict__.items()}
     
     def merge_from_dict(self, d):
         self.__dict__.update(d)

@@ -2,7 +2,7 @@ import math
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-from utils import CfgNode as CN
+from .utils import CfgNode as CN
 
 
 class NewGELU(nn.Module):
@@ -13,10 +13,10 @@ class CausalSelfAttention(nn.Module):
     def __init__(self, config):
         super().__init__()
         assert config.n_embd % config.n_head == 0
-        self.c_attn = nn.Linear(config.n_embed, 3*config.n_embd)
+        self.c_attn = nn.Linear(config.n_embd, 3*config.n_embd)
         self.c_proj = nn.Linear(config.n_embd, config.n_embd)
 
-        self.atn_dropout = nn.Dropout(config.attn_pdrop)
+        self.attn_dropout = nn.Dropout(config.attn_pdrop)
         self.resid_dropout = nn.Dropout(config.resid_pdrop)
 
         self.register_buffer("bias", torch.tril(torch.ones(config.block_size, config.block_size)).view(1, 1, config.block_size, config.block_size))
@@ -49,9 +49,9 @@ class Block(nn.Module):
         super().__init__()
         self.ln_1 = nn.LayerNorm(config.n_embd)
         self.attn = CausalSelfAttention(config)
-        self.ln_2 = nn.LayerNorm(config.n_embed)
+        self.ln_2 = nn.LayerNorm(config.n_embd)
         self.mlp = nn.ModuleDict(dict(
-            c_fc = nn.Linear(config.n_embed, 4 * config.n_embed), 
+            c_fc = nn.Linear(config.n_embd, 4 * config.n_embd), 
             c_proj = nn.Linear(4 * config.n_embd, config.n_embd),
             act = NewGELU(),
             dropout = nn.Dropout(config.resid_pdrop),
@@ -77,14 +77,14 @@ class GPT(nn.Module):
         c.vocab_size = None
         c.block_size = None
         
-        c.embed_pdrop = 0.1
+        c.embd_pdrop = 0.1
         c.resid_pdrop = 0.1
         c.attn_pdrop = 0.1
 
         return c
     
     def __init__(self, config):
-        super.__init__()
+        super().__init__()
         assert config.vocab_size is not None
         assert config.block_size is not None
         self.block_size = config.block_size
@@ -114,7 +114,7 @@ class GPT(nn.Module):
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
 
         self.apply(self._init_weights)
-        for pn, p in self.named_parameters:
+        for pn, p in self.named_parameters():
             if pn.endswith("c_proj.weight"):
                 torch.nn.init.normal_(p, mean=0.0, std=0.02/math.sqrt(2 * config.n_layer))
 
@@ -127,7 +127,7 @@ class GPT(nn.Module):
             if module.bias is not None:
                 torch.nn.init.zeros_(module.bias)
         elif isinstance(module, nn.Embedding): 
-            # TODO: use the sine/cosine functions to be pos embedding later, the implementation here is 
+            # TODO: use the sine/cosine functions to be pos embdding later, the implementation here is 
             # from https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py#L462
             torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
         elif isinstance(module, nn.LayerNorm):
@@ -173,7 +173,7 @@ class GPT(nn.Module):
         whitelist_weight_modules = (torch.nn.Linear, )
         blacklist_weight_modules = (torch.nn.LayerNorm, torch.nn.Embedding)
         for mn, m in self.named_modules():
-            for pn, p in m.named_parameters:
+            for pn, p in m.named_parameters():
                 fpn = "%s.%s" %(mn, pn) if mn else pn
                 if pn.endswith("bias"):
                     no_decay.add(fpn)
