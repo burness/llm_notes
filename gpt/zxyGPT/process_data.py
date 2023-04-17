@@ -9,6 +9,7 @@ import opencc
 import argparse
 import multiprocessing
 from gensim.corpora import WikiCorpus
+from .data import indexed_dataset
 logging.basicConfig(format="%(asctime)s: %(levelname)s: %(message)s", level=logging.INFO)
 
 try:
